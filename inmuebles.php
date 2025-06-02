@@ -12,6 +12,39 @@ if ($conn->connect_error) {
     die(json_encode(["error" => "Conexión fallida: " . $conn->connect_error]));
 }
 
+
+$params = [];
+$types = "";
+if (isset($_GET['action']) && $_GET['action'] === 'opciones') {
+    $res = [];
+
+    // Obtener tipos
+    $tipos = $conn->query("SELECT Descripcion FROM tipo");
+    $res['tipos'] = [];
+    while ($row = $tipos->fetch_assoc()) {
+        $res['tipos'][] = $row['Descripcion'];
+    }
+
+    // Obtener transacciones
+    $trans = $conn->query("SELECT Descripcion FROM transaccion");
+    $res['transacciones'] = [];
+    while ($row = $trans->fetch_assoc()) {
+        $res['transacciones'][] = $row['Descripcion'];
+    }
+
+    // Obtener estados
+    $estados = $conn->query("SELECT Descripcion FROM estado");
+    $res['estados'] = [];
+    while ($row = $estados->fetch_assoc()) {
+        $res['estados'][] = $row['Descripcion'];
+    }
+
+    echo json_encode($res);
+    $conn->close();
+    exit;
+}
+
+
 $query = "
 SELECT 
     i.idInmueble,
