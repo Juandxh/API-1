@@ -12,39 +12,6 @@ if ($conn->connect_error) {
     die(json_encode(["error" => "Conexión fallida: " . $conn->connect_error]));
 }
 
-
-$params = [];
-$types = "";
-if (isset($_GET['action']) && $_GET['action'] === 'opciones') {
-    $res = [];
-
-    // Obtener tipos
-    $tipos = $conn->query("SELECT Descripcion FROM tipo");
-    $res['tipos'] = [];
-    while ($row = $tipos->fetch_assoc()) {
-        $res['tipos'][] = $row['Descripcion'];
-    }
-
-    // Obtener transacciones
-    $trans = $conn->query("SELECT Descripcion FROM transaccion");
-    $res['transacciones'] = [];
-    while ($row = $trans->fetch_assoc()) {
-        $res['transacciones'][] = $row['Descripcion'];
-    }
-
-    // Obtener estados
-    $estados = $conn->query("SELECT Descripcion FROM estado");
-    $res['estados'] = [];
-    while ($row = $estados->fetch_assoc()) {
-        $res['estados'][] = $row['Descripcion'];
-    }
-
-    echo json_encode($res);
-    $conn->close();
-    exit;
-}
-
-
 $query = "
 SELECT 
     i.idInmueble,
@@ -65,28 +32,33 @@ WHERE 1 = 1 AND estado_id_estado = 1
 $params = [];
 $types = "";
 
+// Filtro por tipo
 if (!empty($_GET['tipo'])) {
     $query .= " AND t.Descripcion LIKE ?";
     $params[] = "%" . $_GET['tipo'] . "%";
     $types .= "s";
 }
 
+// Filtro por transacción
 if (!empty($_GET['transaccion'])) {
     $query .= " AND e.Descripcion LIKE ?";
     $params[] = "%" . $_GET['transaccion'] . "%";
     $types .= "s";
 }
 
+// Filtro por localidad
 if (!empty($_GET['localidad'])) {
     $query .= " AND i.localidad LIKE ?";
     $params[] = "%" . $_GET['localidad'] . "%";
     $types .= "s";
 }
 
-if (!empty($_GET['precio'])) {
-    $query .= " AND i.precio <= ?";
-    $params[] = $_GET['precio'];
-    $types .= "i";
+// Filtro por rango de precios
+if (!empty($_GET['precio_min']) && !empty($_GET['precio_max'])) {
+    $query .= " AND i.precio BETWEEN ? AND ?";
+    $params[] = (int)$_GET['precio_min'];
+    $params[] = (int)$_GET['precio_max'];
+    $types .= "ii";
 }
 
 $stmt = $conn->prepare($query);
